@@ -7,11 +7,20 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
 var jobsCapacity int
+
+type fileLine struct {
+	line    int
+	content string
+}
+
+type foundFile struct {
+	pathName string
+	lines    []fileLine
+}
 
 func main() {
 
@@ -45,7 +54,7 @@ func searchFilesByExtension(search string, extensions []string) {
 			}
 
 			for _, extension := range extensions {
-				if strings.HasSuffix(path, extension) {
+				if strings.HasSuffix(strings.ToLower(path), strings.ToLower(extension)) {
 					fileSearch <- path
 				}
 			}
@@ -70,6 +79,8 @@ func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, search stri
 
 	for filePath := range fileSearch {
 
+		var linesFound []fileLine
+
 		oFile, oError := os.Open(filePath)
 
 		if oError != nil {
@@ -84,8 +95,8 @@ func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, search stri
 
 		for scanner.Scan() {
 			currentLineText := scanner.Text()
-			if strings.Contains(currentLineText, search) {
-				fmt.Println(filePath + ":" + strconv.Itoa(line) + " -> " + strings.Trim(currentLineText, " "))
+			if strings.Contains(strings.ToLower(currentLineText), strings.ToLower(search)) {
+				linesFound = append(linesFound, fileLine{line: line, content: currentLineText})
 			}
 
 			line++
@@ -95,9 +106,24 @@ func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, search stri
 
 		if oError := scanner.Err(); oError != nil {
 			log.Println(oError)
+		} else {
+			if len(linesFound) > 0 {
+				showResult(foundFile{pathName: filePath, lines: linesFound})
+			}
 		}
 	}
 
 	done <- true
+
+}
+
+// showing the result to user
+func showResult(oFoundFile foundFile) {
+
+	fmt.Println(oFoundFile.pathName)
+
+	for _, oFileLine := range oFoundFile.lines {
+		fmt.Println("  ", oFileLine.line, "->", strings.TrimSpace(oFileLine.content))
+	}
 
 }
