@@ -6,7 +6,7 @@
 > Here is an example of command line use 
 
 ```
-vine "append" ".go,.mod"
+vine append .go,.mod
 ```
 > ### Arguments
 > 1. Search string
