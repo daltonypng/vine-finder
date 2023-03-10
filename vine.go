@@ -120,10 +120,8 @@ func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, search stri
 // showing the result to user
 func showResult(oFoundFile foundFile) {
 
-	fmt.Println(oFoundFile.pathName)
-
 	for _, oFileLine := range oFoundFile.lines {
-		fmt.Println("  ", oFileLine.line, "->", strings.TrimSpace(oFileLine.content))
+		fmt.Println(oFoundFile.pathName+":", oFileLine.line, "->", strings.TrimSpace(oFileLine.content))
 	}
 
 }
