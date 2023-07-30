@@ -25,8 +25,7 @@ type foundFile struct {
 func main() {
 
 	if len(os.Args) < 4 {
-		fmt.Println("vine: Recursive find-in-files. \n")
-		fmt.Println("Syntax: vine <searchPath> <searchExpression> <filesExtensions>")
+		showHelp()
 		return
 	}
 
@@ -127,4 +126,17 @@ func showResult(oFoundFile foundFile) {
 		fmt.Println(oFoundFile.pathName+":", oFileLine.line, "->", strings.TrimSpace(oFileLine.content))
 	}
 
+}
+
+// show syntax help message to user
+func showHelp() {
+
+	fmt.Println("vine: Recursive find-in-files.\n")
+
+	fmt.Println("Syntax: vine <searchPath> <searchExpression> <filesExtensions>")
+
+	fmt.Println("<searchPath>: The starting directory for the search.")
+	fmt.Println("<searchExpression>: The string expression to search for.")
+	fmt.Println("<filesExtensions>: File extensions to be searched. ")
+	fmt.Println("You can use multiple extensions, separating them by ','")
 }
