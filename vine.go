@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -39,8 +40,6 @@ func main() {
 			useRegex = true
 		}
 	}
-
-	fmt.Println("Using regexp:", useRegex)
 
 	searchFilesByExtension(
 		searchPath,
@@ -161,7 +160,7 @@ func findInFilesConsumer(
 func showResult(oFoundFile foundFile) {
 
 	for _, oFileLine := range oFoundFile.lines {
-		fmt.Println(oFoundFile.pathName+":", oFileLine.line, "->", strings.TrimSpace(oFileLine.content))
+		fmt.Println(oFoundFile.pathName+":"+strconv.Itoa(oFileLine.line), "->", strings.TrimSpace(oFileLine.content))
 	}
 
 }

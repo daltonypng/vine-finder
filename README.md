@@ -1,13 +1,15 @@
 # vine-finder
-"Find in files" project designed to search content on HUUUUUGE code projects
+vine: Recursive find-in-files.
 
-## Basic comand line use
+## Syntax
+vine <searchPath> <searchExpression> <filesExtensions> <options>
 
-> Here is an example of command line use 
+*<searchPath>: The starting directory for the search.
 
-```
-vine append .go,.mod
-```
-> ### Arguments
-> 1. Search string
-> 2. Files extension, separeted by comma (",")
+*<searchExpression>: The string expression to search for.
+
+*<filesExtensions>: File extensions to be searched.
+You can use multiple extensions, separating them by ','.
+
+*<options>: Extra options.
+ --regex: Use regular expression.
