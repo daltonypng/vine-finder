@@ -7,10 +7,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
-
-var jobsCapacity int
 
 type fileLine struct {
 	line    int
@@ -24,6 +23,8 @@ type foundFile struct {
 
 func main() {
 
+	useRegex := false
+
 	if len(os.Args) < 4 {
 		showHelp()
 		return
@@ -33,11 +34,27 @@ func main() {
 	searchExpression := os.Args[2]
 	filesExtensions := strings.Split(os.Args[3], ",")
 
-	searchFilesByExtension(searchPath, searchExpression, filesExtensions)
+	for i := 4; i <= len(os.Args); i++ {
+		if os.Args[i-1] == "--regex" {
+			useRegex = true
+		}
+	}
+
+	fmt.Println("Using regexp:", useRegex)
+
+	searchFilesByExtension(
+		searchPath,
+		searchExpression,
+		filesExtensions,
+		useRegex)
 }
 
 // walk by directories looking for files with the extesions suffix
-func searchFilesByExtension(searchPath string, searchExpression string, filesExtensions []string) {
+func searchFilesByExtension(
+	searchPath string,
+	searchExpression string,
+	filesExtensions []string,
+	useRegex bool) {
 
 	const jobsCapacity = 4
 
@@ -45,7 +62,11 @@ func searchFilesByExtension(searchPath string, searchExpression string, filesExt
 	done := make(chan bool)
 
 	for i := 1; i <= jobsCapacity; i++ {
-		go findInFilesConsumer(fileSearch, done, searchExpression)
+		go findInFilesConsumer(
+			fileSearch,
+			done,
+			searchExpression,
+			useRegex)
 	}
 
 	oError := filepath.Walk(searchPath,
@@ -77,7 +98,11 @@ func searchFilesByExtension(searchPath string, searchExpression string, filesExt
 }
 
 // consume all files pushed, to execute the searching
-func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, searchExpression string) {
+func findInFilesConsumer(
+	fileSearch <-chan string,
+	done chan<- bool,
+	searchExpression string,
+	useRegex bool) {
 
 	for filePath := range fileSearch {
 
@@ -96,9 +121,22 @@ func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, searchExpre
 		line := 1
 
 		for scanner.Scan() {
+
 			currentLineText := scanner.Text()
-			if strings.Contains(strings.ToLower(currentLineText), strings.ToLower(searchExpression)) {
-				linesFound = append(linesFound, fileLine{line: line, content: currentLineText})
+
+			if useRegex {
+
+				found, _ := regexp.MatchString(searchExpression, currentLineText)
+
+				if found {
+					linesFound = append(linesFound, fileLine{line: line, content: currentLineText})
+				}
+
+			} else {
+
+				if strings.Contains(strings.ToLower(currentLineText), strings.ToLower(searchExpression)) {
+					linesFound = append(linesFound, fileLine{line: line, content: currentLineText})
+				}
 			}
 
 			line++
@@ -133,10 +171,15 @@ func showHelp() {
 
 	fmt.Println("vine: Recursive find-in-files.\n")
 
-	fmt.Println("Syntax: vine <searchPath> <searchExpression> <filesExtensions>")
+	fmt.Println("Syntax: vine <searchPath> <searchExpression> <filesExtensions> <options>\n")
 
-	fmt.Println("<searchPath>: The starting directory for the search.")
-	fmt.Println("<searchExpression>: The string expression to search for.")
+	fmt.Println("<searchPath>: The starting directory for the search.\n")
+
+	fmt.Println("<searchExpression>: The string expression to search for.\n")
+
 	fmt.Println("<filesExtensions>: File extensions to be searched. ")
-	fmt.Println("You can use multiple extensions, separating them by ','")
+	fmt.Println("You can use multiple extensions, separating them by ','.\n")
+
+	fmt.Println("<options>: Extra options.")
+	fmt.Println(" --regex: Use regular expression.")
 }
