@@ -24,36 +24,39 @@ type foundFile struct {
 
 func main() {
 
-	if len(os.Args) < 3 {
-		log.Println("This program requires 2 arguments")
+	if len(os.Args) < 4 {
+		fmt.Println("vine: Recursive find-in-files. \n")
+		fmt.Println("Syntax: vine <searchPath> <searchExpression> <filesExtensions>")
 		return
 	}
 
-	search := os.Args[1]
-	extensions := strings.Split(os.Args[2], ",")
-	jobsCapacity = 3
+	searchPath := os.Args[1]
+	searchExpression := os.Args[2]
+	filesExtensions := strings.Split(os.Args[3], ",")
 
-	searchFilesByExtension(search, extensions)
+	searchFilesByExtension(searchPath, searchExpression, filesExtensions)
 }
 
-// walk by directories looking for files to push into consumers
-func searchFilesByExtension(search string, extensions []string) {
+// walk by directories looking for files with the extesions suffix
+func searchFilesByExtension(searchPath string, searchExpression string, filesExtensions []string) {
+
+	const jobsCapacity = 4
 
 	fileSearch := make(chan string, jobsCapacity*2)
 	done := make(chan bool)
 
 	for i := 1; i <= jobsCapacity; i++ {
-		go findInFilesConsumer(fileSearch, done, search)
+		go findInFilesConsumer(fileSearch, done, searchExpression)
 	}
 
-	oError := filepath.Walk(".",
+	oError := filepath.Walk(searchPath,
 		func(path string, _ os.FileInfo, oError error) error {
 
 			if oError != nil {
 				return oError
 			}
 
-			for _, extension := range extensions {
+			for _, extension := range filesExtensions {
 				if strings.HasSuffix(strings.ToLower(path), strings.ToLower(extension)) {
 					fileSearch <- path
 				}
@@ -75,7 +78,7 @@ func searchFilesByExtension(search string, extensions []string) {
 }
 
 // consume all files pushed, to execute the searching
-func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, search string) {
+func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, searchExpression string) {
 
 	for filePath := range fileSearch {
 
@@ -95,7 +98,7 @@ func findInFilesConsumer(fileSearch <-chan string, done chan<- bool, search stri
 
 		for scanner.Scan() {
 			currentLineText := scanner.Text()
-			if strings.Contains(strings.ToLower(currentLineText), strings.ToLower(search)) {
+			if strings.Contains(strings.ToLower(currentLineText), strings.ToLower(searchExpression)) {
 				linesFound = append(linesFound, fileLine{line: line, content: currentLineText})
 			}
 
